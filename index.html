@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Journaling App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            /* フォントをNoto Sans JPに変更 */
+            font-family: 'Noto Sans JP', sans-serif;
+            /* 温かみのあるクリーム色の背景 */
+            background-color: #FFFBF5;
+            color: #5D5D5D;
+        }
+        .ai-response-bubble {
+            /* AIの返答を優しいピンクのグラデーションに */
+            background: linear-gradient(135deg, #FAD0C4 0%, #FFD1FF 100%);
+            color: #6A515E; /* 文字色を落ち着いた色に */
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 12px;
+            animation: fadeIn 0.5s ease-in-out;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            /* ローダーの色をテーマに合わせる */
+            border-top: 4px solid #E6A4B4;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* カスタムボタンスタイル */
+        .btn-custom {
+            color: white;
+            font-weight: 500;
+            padding: 12px 16px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+        /* グラデーションボタン */
+        .btn-gradient-rose { background-image: linear-gradient(to right, #ff9a9e 0%, #fecfef 99%); }
+        .btn-gradient-lavender { background-image: linear-gradient(to right, #e0c3fc 0%, #8ec5fc 100%); }
+        .btn-gradient-peach { background-image: linear-gradient(to right, #fab2b7 0%, #ffcda5 100%); }
+        .btn-analyze { background-color: #6A515E; }
+        .btn-analyze:hover { background-color: #56414c; }
+
+        /* テキストエリアのスタイル */
+        #journal-entry {
+            border: 1px solid #F0E2E6;
+            background-color: #fff;
+            border-radius: 16px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+        #journal-entry:focus {
+             border-color: #E6A4B4;
+             box-shadow: 0 0 0 2px rgba(230, 164, 180, 0.3);
+             outline: none;
+        }
+
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-2xl">
+
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold" style="color: #B48494;">AI Journal</h1>
+            <p class="text-gray-400 mt-3">あなたの心と対話する、特別な時間</p>
+        </header>
+
+        <main class="bg-white/70 backdrop-blur-sm p-6 rounded-3xl shadow-lg" style="box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07);">
+            
+            <!-- AI Response Area -->
+            <div id="ai-response-area" class="mb-6">
+                <div class="ai-response-bubble">
+                    <p class="font-bold">こんにちは！</p>
+                    <p>今日一日を振り返ってみて、感じたこと、考えたこと、心に残った出来事を自由に教えてください。</p>
+                </div>
+            </div>
+
+            <!-- User Input Area -->
+            <div class="mb-5">
+                <textarea id="journal-entry" class="w-full h-48 p-4 transition" placeholder="ここにあなたの気持ちをそっと書き留めてみましょう..."></textarea>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+                <button id="get-daily-prompt" class="w-full btn-custom btn-gradient-rose">
+                    今日の記録
+                </button>
+                <button id="get-guided-prompt" class="w-full btn-custom btn-gradient-lavender">
+                    ガイド付きジャーナル
+                </button>
+                <button id="get-inspiration-prompt" class="w-full btn-custom btn-gradient-peach">
+                    インスピレーション
+                </button>
+            </div>
+            
+            <button id="analyze-button" class="w-full btn-custom btn-analyze">
+                書いた内容をAIと振り返る
+            </button>
+
+             <!-- Loading Indicator -->
+            <div id="loader" class="hidden loader"></div>
+
+        </main>
+        
+        <footer class="text-center mt-8 text-sm text-gray-400">
+            <p>このアプリはデモです。入力した内容は保存されません。</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const aiResponseArea = document.getElementById('ai-response-area');
+        const journalEntry = document.getElementById('journal-entry');
+        const analyzeButton = document.getElementById('analyze-button');
+        const getDailyPromptBtn = document.getElementById('get-daily-prompt');
+        const getGuidedPromptBtn = document.getElementById('get-guided-prompt');
+        const getInspirationPromptBtn = document.getElementById('get-inspiration-prompt');
+        const loader = document.getElementById('loader');
+
+        // --- Prompt Templates ---
+
+        const dailyPrompt = `
+            <p class="font-bold">今日一日を振り返ってみましょう</p>
+            <p>感じたこと、考えたこと、心に残った出来事を自由に教えてください。どんな些細なことでも構いません。</p>
+            <ul class="list-disc list-inside mt-2 text-sm">
+                <li>どんな場所に行った？</li>
+                <li>誰と会った？</li>
+                <li>どんな気持ちになった？（嬉しかった、悲しかった、イライラした、楽しかった、etc.）</li>
+                <li>ふと頭に浮かんだことや、気づいたことはある？</li>
+            </ul>
+        `;
+
+        const guidedPrompt = `
+            <p class="font-bold">少し深く考えてみませんか？</p>
+            <p>書くことが思い浮かばないようでしたら、以下の質問の中から気になったものを選んで、その答えを自由に書き出してみてください。</p>
+            <ul class="list-disc list-inside mt-2 text-sm">
+                <li>最近、あなたが「小さな幸せ」を感じた瞬間はどんな時でしたか？</li>
+                <li>今、心の中に「こうなったらいいな」と思うことはありますか？</li>
+                <li>もし誰か一人に感謝を伝えるとしたら、誰に、どんなことを伝えたいですか？</li>
+                <li>最近、新しく学んだことや、気づいたことはありますか？</li>
+            </ul>
+        `;
+
+        // --- Event Listeners ---
+
+        getDailyPromptBtn.addEventListener('click', () => {
+            updateAiResponse(dailyPrompt);
+        });
+
+        getGuidedPromptBtn.addEventListener('click', () => {
+            updateAiResponse(guidedPrompt);
+        });
+        
+        getInspirationPromptBtn.addEventListener('click', async () => {
+            await generateAiResponse("inspiration");
+        });
+
+        analyzeButton.addEventListener('click', async () => {
+            const entryText = journalEntry.value;
+            if (entryText.trim() === '') {
+                updateAiResponse('<p class="font-bold" style="color: #D83A56;">振り返るには、まずジャーナルに何か記入してくださいね。</p>');
+                return;
+            }
+            await generateAiResponse("analysis", entryText);
+        });
+        
+        // --- Core Functions ---
+
+        function updateAiResponse(htmlContent) {
+            aiResponseArea.innerHTML = `<div class="ai-response-bubble">${htmlContent}</div>`;
+        }
+        
+        function showLoader(show) {
+            loader.classList.toggle('hidden', !show);
+        }
+
+        async function generateAiResponse(type, text = "") {
+            showLoader(true);
+            // Disable all buttons during generation
+            document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+            
+            let prompt;
+            if (type === "analysis") {
+                prompt = `以下のジャーナル内容を分析し、muuteアプリのように、優しく、洞察に満ちたフィードバックを生成してください。分析には以下の点を含めてください：
+                1. 全体的な感情の傾向（ポジティブ、ネガティブなど）。
+                2. 頻繁に使用される単語や表現、そしてそれが示す可能性のある性格や関心事。
+                3. 特に深く思考していると思われるトピック。
+                フィードバックは、ユーザーが自己理解を深められるような、肯定的で支援的なトーンで記述してください。友人のように話しかけ、自然な改行を入れてください。
+                ユーザーのジャーナル：\n---\n${text}\n---`;
+            } else if (type === "inspiration") {
+                prompt = `ユーザーにインスピレーションを与える、短くてポジティブなメッセージを生成してください。例：「完璧を求めなくて大丈夫。今日できる最善を尽くしたら、それで十分素晴らしい一日だよ。」というスタイルでお願いします。`;
+            }
+
+            try {
+                const responseText = await callGeminiAPI(prompt);
+                const formattedResponse = responseText.replace(/\n/g, '<br>');
+                updateAiResponse(`<p>${formattedResponse}</p>`);
+
+            } catch (error) {
+                console.error("Error generating AI response:", error);
+                updateAiResponse('<p class="font-bold" style="color: #D83A56;">AIとの通信中にエラーが発生しました。少し時間をおいてから、もう一度お試しください。</p>');
+            } finally {
+                showLoader(false);
+                // Re-enable all buttons
+                 document.querySelectorAll('button').forEach(btn => btn.disabled = false);
+            }
+        }
+        
+        async function callGeminiAPI(prompt) {
+            const apiKey = ""; // APIキーは空のままにしてください
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{
+                    role: "user",
+                    parts: [{ text: prompt }]
+                }]
+            };
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`API call failed with status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            
+            if (result.candidates && result.candidates.length > 0 &&
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+                return result.candidates[0].content.parts[0].text;
+            } else {
+                console.error("Unexpected API response structure:", result);
+                if (result.promptFeedback && result.promptFeedback.blockReason) {
+                     throw new Error(`Request blocked: ${result.promptFeedback.blockReason}`);
+                }
+                throw new Error("AIから有効な応答がありませんでした。");
+            }
+        }
+    </script>
+</body>
+</html>
