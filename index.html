@@ -3,214 +3,690 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Journaling Chat</title>
+    <title>双極性障害パートナー支援・インタラクティブガイド</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony -->
+    <!-- Application Structure Plan: このSPAは、レポートの章立てをそのまま再現するのではなく、利用者のニーズに基づいたテーマ別のナビゲーション（「病気を知る」「支え方」「自分のケア」「相談窓口」）を採用します。これにより、利用者は今直面している課題や知りたい情報に直接アクセスできます。例えば、危機的状況にある人は「支え方」の危機対応へ、精神的に疲弊している人は「自分のケア」へ、といった具体的な動線を想定しています。各セクションでは、タブ切り替え、インタラクティブなチャート、クリックで詳細を表示するカード形式などのUIを用い、膨大な情報を整理し、探索的な学習を促します。この構造は、受動的な読書体験を、能動的で自己主導の学習体験へと転換させることを目的としています。 -->
+    <!-- Visualization & Content Choices: レポート内の情報を、利用者の理解を深めることを目標に、最適な形式で再構成します。
+- 情報: 双極性障害の気分の波 (躁・うつ)。 Goal: 病気の全体像を直感的に理解させる。 Viz/Method: Chart.jsによるインタラクティブな線グラフ。 Interaction: グラフ上の点にホバーすると、各状態（躁、うつ等）の簡単な説明を表示。 Justification: 静的なテキストよりも、気分の変動というダイナミックな概念を視覚的に伝えやすい。
+- 情報: 支援者が直面する感情的負担（孤独感、無力感など）。 Goal: 支援者の感情を肯定し、一人ではないことを示す。 Viz/Method: Chart.jsによるドーナツグラフ。 Interaction: 各セグメントにホバーすると、具体的な感情名を表示。 Justification: 感情的な負担の内訳を可視化することで、自身の状況を客観視する手助けとなる。
+- 情報: コミュニケーションのヒント（表2）。 Goal: 状況別の適切な対応を即座に参照できるようにする。 Viz/Method: 「適切な対応」「避けるべき対応」を並べたインタラクティブなカード。 Interaction: クリックやホバーで関連情報を強調。 Justification: 表形式よりも比較しやすく、記憶に残りやすい。
+- 情報: 自己ケアのチェックリスト（表3）。 Goal: 支援者自身の健康状態のセルフチェックを促す。 Viz/Method: HTMLのインタラクティブなチェックリスト。 Interaction: ユーザーが項目をクリックしてチェックできる。 Justification: 能動的なアクションを通じて、自己ケアへの意識を高める。
+- 情報: 支援リソース（表4）。 Goal: 必要な支援へ迅速に繋げる。 Viz/Method: カテゴリ分けされたアコーディオン形式のリスト。 Interaction: カテゴリ名をクリックすると詳細なリストが展開。 Justification: 情報の階層化により、目的のリソースを見つけやすくする。
+- 新機能: 症状に関するQ&A。 Goal: ユーザーの具体的な疑問に即座に答える。 Viz/Method: テキスト入力とAIによるテキスト生成。 Interaction: 質問を入力しボタンを押すと回答が表示される。 Justification: 静的な情報だけではカバーしきれない、個別具体的な疑問に対応する。
+- 新機能: 感情サポートメッセージ生成。 Goal: 支援者の感情を肯定し、心の負担を軽減する。 Viz/Method: テキスト入力とAIによる共感的なメッセージ生成。 Interaction: 気持ちを入力しボタンを押すとメッセージが表示される。 Justification: 心理的サポートを提供し、一人ではないという感覚を促す。 -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
             font-family: 'Noto Sans JP', sans-serif;
-            background-color: #FFFBF5;
-            color: #5D5D5D;
+            background-color: #FDFBF8; /* Warm Neutral Background */
+            color: #4A4A4A;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .nav-link {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
         }
-        
-        /* メッセージの吹き出し */
-        .ai-response-bubble {
-            background: linear-gradient(135deg, #FAD0C4 0%, #FFD1FF 100%);
-            color: #6A515E;
-            border-radius: 20px;
-            padding: 16px;
-            margin-top: 12px;
-            animation: fadeIn 0.5s ease-in-out;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-            align-self: flex-start;
+        .nav-link.active {
+            border-bottom-color: #8AB4A0; /* Muted Green Accent */
+            color: #3C6E71; /* Dark Teal for active text */
         }
-        .user-message-bubble {
-            background-color: #ffffff;
-            color: #444;
-            border-radius: 20px;
-            padding: 16px;
-            margin-top: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-            align-self: flex-end;
-            animation: fadeIn 0.5s ease-in-out;
+        .nav-link:hover {
+            border-bottom-color: #D3A993; /* Subtle Terracotta Accent on hover */
         }
-        
-        #chat-history {
-            display: flex;
-            flex-direction: column;
-            gap: 8px; /* 吹き出しの間隔 */
+        .content-section {
+            display: none;
         }
-        
-        /* 新しいローディング表示のスタイル */
-        .loader-dots { display: flex; justify-content: center; padding: 10px; }
-        .dot {
-            width: 8px; height: 8px; margin: 0 4px;
-            background-color: #E6A4B4;
+        .content-section.active {
+            display: block;
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid #E0E0E0;
+        }
+        .tab-button.active {
+            border-bottom-color: #8AB4A0;
+            font-weight: 700;
+            color: #3C6E71;
+        }
+        .card {
+            background-color: #FFFFFF;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 40vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            border: 0.25rem solid currentColor;
+            border-right-color: transparent;
             border-radius: 50%;
-            animation: dot-bounce 1.4s infinite ease-in-out both;
+            animation: spinner-border .75s linear infinite;
         }
-        .dot:nth-child(2) { animation-delay: -0.16s; }
-        .dot:nth-child(3) { animation-delay: -0.32s; }
-        @keyframes dot-bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1.0); }
+        @keyframes spinner-border {
+            to { transform: rotate(360deg); }
         }
-
-        /* 入力エリアのフォーカス時のスタイル */
-        #chat-input:focus {
-             border-color: #E6A4B4;
-             box-shadow: 0 0 0 2px rgba(230, 164, 180, 0.3);
-             outline: none;
+        /* New styles for checklist feedback */
+        .checklist-item-checked {
+            background-color: #E6F3EE; /* Light green-ish tint */
+            border-color: #8AB4A0;
+        }
+        .feedback-message {
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.5s ease-in-out, max-height 0.5s ease-in-out;
+            color: #3C6E71;
+            font-size: 0.875rem; /* text-sm */
+            padding-left: 1.75rem; /* To align with checkbox text */
+            margin-top: 0.25rem;
+        }
+        .feedback-message.active {
+            opacity: 1;
+            max-height: 50px; /* Adjust as needed for message height */
         }
     </style>
 </head>
-<body class="text-gray-800">
+<body class="antialiased">
 
-    <div class="container mx-auto p-4 md:p-8 max-w-2xl h-screen flex flex-col">
-
-        <header class="text-center mb-6 shrink-0">
-            <h1 class="text-4xl md:text-5xl font-bold" style="color: #B48494;">AI Journal</h1>
-            <p class="text-gray-400 mt-3">あなたの心と対話する、特別な時間</p>
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <header class="py-6 md:py-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">双極性障害のパートナーを支えるあなたへ</h1>
+            <p class="mt-3 text-lg text-gray-600">ひとりで抱え込まないためのインタラクティブガイド</p>
         </header>
 
-        <main class="bg-white/70 backdrop-blur-sm p-4 sm:p-6 rounded-3xl shadow-lg flex-1 flex flex-col min-h-0" style="box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07);">
-            <!-- チャット履歴エリア -->
-            <div id="chat-history" class="flex-1 overflow-y-auto pr-2">
-                <!-- メッセージはJavaScriptによってここに追加されます -->
-            </div>
+        <nav class="flex justify-center border-b border-gray-200 mb-8">
+            <a href="#home" class="nav-link active text-lg font-semibold py-4 px-6">ホーム</a>
+            <a href="#understand" class="nav-link text-lg font-semibold py-4 px-6">病気を知る</a>
+            <a href="#support" class="nav-link text-lg font-semibold py-4 px-6">支え方</a>
+            <a href="#selfcare" class="nav-link text-lg font-semibold py-4 px-6">自分のケア</a>
+            <a href="#resources" class="nav-link text-lg font-semibold py-4 px-6">相談窓口</a>
+        </nav>
 
-            <!-- ローディング表示 -->
-            <div id="loader" class="hidden">
-                <div class="loader-dots">
-                    <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <main>
+            <!-- Home Section -->
+            <section id="home" class="content-section active">
+                <div class="bg-white p-8 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">ようこそ、支え手であるあなたへ</h2>
+                    <p class="text-gray-700 leading-relaxed mb-4">
+                        双極性障害を持つパートナーを支える旅路は、深い愛情と献身を必要とすると同時に、多くの困難を伴います。このガイドは、あなたが直面するであろう課題への理解を深め、効果的な支援方法を学び、そして何よりもあなた自身の心と体の健康を守るための一助となることを目指します。
+                    </p>
+                    <p class="text-gray-700 leading-relaxed">
+                        あなたは決して一人ではありません。ここにある情報を、あなたのペースで、あなたが必要とするときに活用してください。上のナビゲーションから、知りたいテーマを選んでみましょう。
+                    </p>
+                    <div class="mt-8 p-6 bg-stone-100 rounded-lg">
+                         <h3 class="text-xl font-semibold text-center text-gray-700 mb-4">気分の波とパートナーシップへの影響</h3>
+                         <p class="text-center text-gray-600 mb-6">双極性障害の中心的な特徴は、気分の大きな「波」です。この波がパートナーシップにどのような影響を与えうるか、下の図で見てみましょう。</p>
+                         <div class="chart-container">
+                            <canvas id="moodWaveChart"></canvas>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- ユーザー入力フォーム -->
-            <form id="chat-form" class="mt-4 flex items-center gap-3">
-                <input type="text" id="chat-input" class="w-full p-3 border border-gray-200 rounded-full transition" placeholder="メッセージを入力...">
-                <button type="submit" class="shrink-0 bg-gradient-to-r from-pink-400 to-red-400 text-white w-12 h-12 flex items-center justify-center rounded-full hover:from-pink-500 hover:to-red-500 transition shadow-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                </button>
-            </form>
+            <!-- Understand Section -->
+            <section id="understand" class="content-section">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800">双極性障害を深く理解する</h2>
+                    <p class="mt-2 text-gray-600">パートナーの言動の背景にある病気を理解することは、適切な対応への第一歩です。</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                    <div class="flex justify-center border-b border-gray-200 mb-6">
+                        <button class="tab-button active py-2 px-4" data-tab="manic">躁状態</button>
+                        <button class="tab-button py-2 px-4" data-tab="hypomanic">軽躁状態</button>
+                        <button class="tab-button py-2 px-4" data-tab="depressive">うつ状態</button>
+                    </div>
+
+                    <div id="symptom-content">
+                        <!-- Content will be injected by JS -->
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">✨症状に関するQ&A✨</h3>
+                    <p class="text-gray-600 mb-4">双極性障害の症状や行動について、もっと詳しく知りたいことはありますか？質問を入力して、AIに聞いてみましょう。</p>
+                    <div class="flex flex-col md:flex-row gap-4 mb-4">
+                        <input type="text" id="symptomQuestionInput" placeholder="例: 躁状態の時、どうして浪費してしまうんですか？" class="flex-grow p-3 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500">
+                        <button id="askSymptomQuestionBtn" class="bg-teal-600 text-white px-6 py-3 rounded-md hover:bg-teal-700 transition duration-300 ease-in-out font-semibold">質問する</button>
+                    </div>
+                    <div id="symptomAnswerArea" class="p-4 bg-stone-50 border border-stone-200 rounded-md text-gray-700 min-h-[80px] flex items-center justify-center text-center">
+                        <p id="symptomAnswerText">ここに回答が表示されます。</p>
+                        <div id="symptomLoadingIndicator" class="hidden loading-spinner text-teal-500"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Support Section -->
+            <section id="support" class="content-section">
+                 <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800">パートナーへの効果的な支援戦略</h2>
+                    <p class="mt-2 text-gray-600">気分の波に応じた柔軟な対応と、適切な支援方法を学びましょう。</p>
+                </div>
+                <div class="space-y-6">
+                    <div class="card p-6">
+                        <h3 class="text-xl font-bold text-teal-700 mb-4">コミュニケーションのヒント</h3>
+                        <p class="text-gray-600 mb-6">パートナーの状態に合わせたコミュニケーションは、無用な衝突を避け、信頼関係を維持するために不可欠です。下のカードを切り替えて、状況別のヒントを確認しましょう。</p>
+                        <div id="comm-tips-container" class="grid md:grid-cols-2 gap-6">
+                            <!-- JS will populate this -->
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-xl font-bold text-teal-700 mb-4">日常生活のサポート</h3>
+                        <ul class="space-y-3 text-gray-700">
+                           <li class="flex items-start"><span class="text-teal-500 font-bold mr-2">✓</span><span><strong>規則正しい生活リズム:</strong> 睡眠、食事、運動のリズムを保つ手助けを。特に徹夜は躁状態の引き金になるため避けましょう。</span></li>
+                           <li class="flex items-start"><span class="text-teal-500 font-bold mr-2">✓</span><span><strong>ストレスの軽減:</strong> 静かでリラックスできる環境を整え、一人になれる時間を尊重しましょう。</span></li>
+                           <li class="flex items-start"><span class="text-teal-500 font-bold mr-2">✓</span><span><strong>治療への協力:</strong> 定期的な通院や服薬は治療の要です。通院に付き添ったり、服薬カレンダーを一緒に確認したりするサポートが有効です。自己判断での中断は再発のリスクを高めます。</span></li>
+                        </ul>
+                    </div>
+                    <div class="card p-6 bg-red-50 border border-red-200">
+                        <h3 class="text-xl font-bold text-red-700 mb-4">もしもの時（危機時の対応）</h3>
+                        <p class="text-gray-600 mb-4">再発の兆候や自殺のサインに気づいたら、冷静に、そして迅速に行動することが重要です。</p>
+                        <ul class="space-y-3 text-red-800">
+                            <li class="flex items-start"><span class="font-bold mr-2">🚨</span><span><strong>再発の兆候を把握:</strong> どんな時に、どんな症状から再発しやすいか、普段から本人と話し合っておきましょう。兆候が見えたらすぐに主治医に相談を。</span></li>
+                            <li class="flex items-start"><span class="font-bold mr-2">🗣️</span><span><strong>自殺のサイン:</strong> 「死にたい」という言葉、身辺整理、突然の別れの言葉などを見逃さないで。批判せず、気持ちを受け止め、「死なないでほしい」と伝えてください。危険を感じたら、すぐに主治医や専門機関に連絡を。</span></li>
+                            <li class="flex items-start"><span class="font-bold mr-2">🛡️</span><span><strong>衝動的な行動への備え:</strong> 興奮が激しい場合は、入院も選択肢です。本人が拒否しても、放置すれば大きな不利益に繋がる可能性があります。危険物は隠し、警察への相談もためらわないでください。</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Self-Care Section -->
+            <section id="selfcare" class="content-section">
+                 <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800">支えるあなたのためのセルフケア</h2>
+                    <p class="mt-2 text-gray-600">パートナーを支え続けるためには、まずあなた自身が心身ともに健康であることが不可欠です。「共倒れ」を防ぎましょう。</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="card p-6">
+                        <h3 class="text-xl font-bold text-blue-700 mb-4">自己ケア・チェックリスト</h3>
+                        <p class="text-gray-600 mb-4">自分自身の状態を客観的に振り返ってみましょう。当てはまる項目にチェックを入れてみてください。</p>
+                        <div id="selfcare-checklist" class="space-y-3">
+                            <!-- Checklist items will be injected by JS -->
+                        </div>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="card p-6">
+                            <h3 class="text-xl font-bold text-blue-700 mb-2">ストレス管理とリフレッシュ</h3>
+                            <p class="text-gray-700">十分な睡眠、趣味や運動の時間を意識的に作りましょう。楽しむことに罪悪感を持つ必要はありません。</p>
+                        </div>
+                         <div class="card p-6">
+                            <h3 class="text-xl font-bold text-blue-700 mb-2">あなたの感情も大切です</h3>
+                            <div class="chart-container h-48 sm:h-56">
+                                <canvas id="supporterBurdensChart"></canvas>
+                            </div>
+                            <p class="text-center text-sm text-gray-600 mt-2">支援者が抱えやすい感情。これらは自然な反応です。</p>
+                        </div>
+                        <div class="card p-6">
+                            <h3 class="text-xl font-bold text-blue-700 mb-2">罪悪感を手放す</h3>
+                            <p class="text-gray-700">パートナーの病気は、あなたのせいではありません。自分を責めず、自分自身を労ってください。信頼できる人に話を聞いてもらうだけでも、心は軽くなります。</p>
+                        </div>
+                        <div class="card p-6">
+                            <h3 class="text-xl font-bold text-blue-700 mb-4">✨感情サポートメッセージ✨</h3>
+                            <p class="text-gray-600 mb-4">今感じていることを自由に書いてみてください。AIがあなたの気持ちに寄り添うメッセージを生成します。</p>
+                            <textarea id="emotionalSupportInput" rows="4" placeholder="例: 最近、パートナーの気分に振り回されて、とても疲れています。どうしたらいいか分かりません。" class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 mb-4"></textarea>
+                            <button id="generateSupportMessageBtn" class="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition duration-300 ease-in-out font-semibold w-full">メッセージを生成する</button>
+                            <div id="supportMessageArea" class="mt-4 p-4 bg-stone-50 border border-stone-200 rounded-md text-gray-700 min-h-[100px] flex items-center justify-center text-center">
+                                <p id="supportMessageText">生成されたメッセージがここに表示されます。</p>
+                                <div id="supportMessageLoadingIndicator" class="hidden loading-spinner text-blue-500"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Resources Section -->
+            <section id="resources" class="content-section">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800">利用できる支援リソース</h2>
+                    <p class="mt-2 text-gray-600">一人で抱え込まず、専門家や同じ経験を持つ人々の力を借りましょう。</p>
+                </div>
+                <div id="resources-accordion" class="space-y-2">
+                    <!-- Accordion items will be injected by JS -->
+                </div>
+            </section>
         </main>
         
-        <footer class="text-center mt-4 text-sm text-gray-400 shrink-0">
-            <p>このアプリはデモです。入力した内容は保存されません。</p>
+        <footer class="text-center py-8 mt-12 border-t border-gray-200">
+            <p class="text-gray-500">このガイドは、双極性障害のパートナーを支える方々のための情報提供を目的としています。医学的診断や治療に代わるものではありません。ご自身の健康やパートナーの症状に不安がある場合は、必ず専門の医療機関にご相談ください。</p>
         </footer>
 
     </div>
 
     <script>
-        const chatHistory = document.getElementById('chat-history');
-        const chatForm = document.getElementById('chat-form');
-        const chatInput = document.getElementById('chat-input');
-        const loader = document.getElementById('loader');
-
-        // --- 初回のAIメッセージ ---
-        function initializeChat() {
-            const initialPrompt = "こんにちは！私はあなたの心に寄り添うAIジャーナルです。どんなことでも気軽に話してくださいね。";
-            addMessageToChat('ai', initialPrompt);
-        }
-
-        // --- 新しいチャットフォームのイベントリスナー ---
-        chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const userInput = chatInput.value.trim();
-            if (userInput === '') return;
-
-            addMessageToChat('user', userInput);
-            chatInput.value = '';
-            showLoader(true);
-            
-            // Geminiへのプロンプトは、チャットのような対話感のためにユーザーの入力をそのまま渡します。
-            const prompt = `あなたは、ユーザーの心に寄り添う、優しくて思慮深いAIジャーナリングアシスタントです。ユーザーの次のメッセージに、フレンドリーで共感的に返信してください。:\n\n"${userInput}"`;
-
-            try {
-                const aiResponse = await callGeminiAPI(prompt);
-                addMessageToChat('ai', aiResponse);
-            } catch (error) {
-                console.error("Error generating AI response:", error);
-                addMessageToChat('ai', 'ごめんなさい、AIとの通信中にエラーが発生しました。少し待ってから、もう一度試してみてください。');
-            } finally {
-                showLoader(false);
-            }
-        });
-
-        // --- 主要な関数 ---
-        function addMessageToChat(sender, text) {
-            const messageBubble = document.createElement('div');
-            const bubbleClass = sender === 'ai' ? 'ai-response-bubble' : 'user-message-bubble';
-            messageBubble.classList.add(bubbleClass, 'w-fit', 'max-w-[85%]', 'md:max-w-[75%]');
-            
-            // テキストの改行を<br>に変換
-            const formattedText = text.replace(/\n/g, '<br>');
-            messageBubble.innerHTML = `<p>${formattedText}</p>`;
-            
-            chatHistory.appendChild(messageBubble);
-            //一番下にスクロール
-            chatHistory.scrollTop = chatHistory.scrollHeight;
-        }
-
-        function showLoader(show) {
-            loader.classList.toggle('hidden', !show);
-        }
-        
-        async function callGeminiAPI(prompt) {
-            // API呼び出し中は入力を無効化
-            chatInput.disabled = true;
-            document.querySelector('#chat-form button').disabled = true;
-
-            const apiKey = ""; // APIキーは空のままにしてください
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-            
-            const payload = {
-                contents: [{
-                    role: "user",
-                    parts: [{ text: prompt }]
-                }]
+        document.addEventListener('DOMContentLoaded', function() {
+            // Data
+            const symptomData = {
+                manic: {
+                    title: '躁状態のサイン',
+                    patient: ['気分が高揚し、根拠のない自信に満ちあふれる', '次々とアイデアが浮かぶが、まとまらない', 'ほとんど眠らなくても平気で活動できる', 'お金遣いが荒くなる、ギャンブルにのめり込む', '人の意見に耳を貸さず、怒りっぽくなる'],
+                    observer: ['寝なくても元気で、常に動き回っている', '쉴새 없이 말하며、話が次々と飛ぶ', '高価な買い物を繰り返す', '初対面の人にも馴れ馴れしい、攻撃的になる', '明らかに普段と違う、誇大的な言動が目立つ']
+                },
+                hypomanic: {
+                    title: '軽躁状態のサイン',
+                    patient: ['いつもより気分が良く、活動的になる', '短時間睡眠でも調子が良いと感じる', '仕事や創作活動が非常にはかどる', '社交的になり、会話が弾む', '本人にとっては「絶好調」で、病気とは思わないことが多い'],
+                    observer: ['普段より明らかに元気で、活動的に見える', '冗談をよく言い、周りを盛り上げる', '仕事の能率が上がるが、少しやり過ぎに見える', '少しおせっかいになったり、人の話に割り込んだりする', '「ハイテンションだな」と感じる']
+                },
+                depressive: {
+                    title: 'うつ状態のサイン',
+                    patient: ['何をしても楽しくない、興味がわかない', '気分が重く、憂うつ', '疲れやすいのに眠れない、または眠りすぎる', '自分を責め、自分には価値がないと感じる', '死にたい、消えてしまいたいと考えることがある', '食欲がない、または過食になる'],
+                    observer: ['表情が暗く、口数が減る', '涙もろくなる', '反応が遅くなる、決断できない', '好きだったことにも関心を示さない', '身なりに構わなくなる', '家に引きこもりがちになる']
+                }
             };
 
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+            const commTipsData = {
+                manic: {
+                    title: "躁状態のパートナーと",
+                    good: ["冷静で落ち着いた態度を保つ", "話は短く、簡潔に伝える", "危険がない限り、行動を無理に止めない", "「眠れていないみたいで心配だよ」と体を気遣う"],
+                    bad: ["感情的に反論する", "長々と説教する", "行動を頭ごなしに否定する", "「病気なんだから！」と責める"]
+                },
+                depressive: {
+                    title: "うつ状態のパートナーと",
+                    good: ["「つらいね」と気持ちに寄り添う", "「頑張らなくていいよ」と伝える", "そばにいて、ただ話を聞く", "ゆっくり休める環境を整える"],
+                    bad: ["「頑張れ！」と安易に励ます", "気分転換を無理強いする", "原因を問い詰める", "「怠けている」と捉える"]
+                }
+            };
+
+            const selfcareChecklistData = [
+                { id: 'sleep', text: '十分な睡眠時間を確保できていますか？', feedback: '良い睡眠は心身の回復にとても大切です。今日も一日お疲れ様でした。' },
+                { id: 'rest', text: '定期的に休息やリフレッシュの時間を取っていますか？', feedback: '休息は、あなた自身を充電するために不可欠です。素晴らしいですね！' },
+                { id: 'hobby', text: '趣味や運動など、気分転換になる活動をしていますか？', feedback: '自分の時間を大切にすることは、心のゆとりに繋がります。' },
+                { id: 'social', text: '友人など、パートナー以外の人と話す機会がありますか？', feedback: '他の人との交流は、気分転換や孤独感の軽減に役立ちます。' },
+                { id: 'guilt', text: '「自分のせいだ」と罪悪感に苛まれていませんか？', feedback: 'パートナーの病気はあなたのせいではありません。自分を責める必要はありません。' },
+                { id: 'value', text: '自分を労わり、肯定する意識を持っていますか？', feedback: 'あなたは頑張っています。自分を認め、優しく接してあげてください。' },
+                { id: 'consult', text: 'つらい時、誰かに相談できていますか？', feedback: '一人で抱え込まずに相談できるのは、とても大切な自己ケアです。' }
+            ];
+
+            const resourcesData = [
+                {
+                    category: '地域の相談窓口',
+                    icon: '🏢',
+                    items: [
+                        { name: '保健所・保健センター', desc: 'こころの健康に関する専門相談。お住まいの自治体にご確認ください。' },
+                        { name: '精神保健福祉センター', desc: '各都道府県・指定都市に設置。より専門的な相談が可能です。' },
+                        { name: 'こころの健康相談統一ダイヤル', desc: '全国どこからでもかけられる電話相談。 Tel: 0570-064-556' }
+                    ]
+                },
+                {
+                    category: '家族会・サポートグループ',
+                    icon: '👨‍👩‍👧‍👦',
+                    items: [
+                        { name: 'みんなねっと（全国精神保健福祉会連合会）', desc: '全国の家族会情報や相談対応。同じ立場の仲間と繋がれます。' },
+                        { name: 'NPO法人ノーチラス会', desc: '双極性障害の当事者・家族による会。電話相談も実施。' }
+                    ]
+                },
+                {
+                    category: 'その他の専門サポート',
+                    icon: '👩‍⚕️',
+                    items: [
+                        { name: '訪問看護ステーション', desc: '医師の指示で看護師が自宅を訪問。服薬管理や生活リズムの相談、家族の支援も行います。' },
+                        { name: 'カウンセリング', desc: '支援者自身の心の負担を軽くするためにも有効です。医療機関で相談できます。' }
+                    ]
+                },
+                {
+                    category: '経済的支援制度',
+                    icon: '💰',
+                    items: [
+                        { name: '自立支援医療制度', desc: '精神疾患の医療費の自己負担が原則1割に軽減されます。' },
+                        { name: '障害年金', desc: '病気により仕事や生活に支障が出た場合に受給できる可能性があります。' },
+                        { name: '傷病手当金', desc: '病気で会社を休んだ際の生活保障（健康保険加入者）。' }
+                    ]
+                }
+            ];
+            
+            // Navigation
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('.content-section');
+            navLinks.forEach(link => {
+                link.addEventListener('click', e => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute('href').substring(1);
+                    
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                    
+                    sections.forEach(s => {
+                        s.classList.remove('active');
+                        if (s.id === targetId) {
+                            s.classList.add('active');
+                        }
+                    });
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 });
+            });
 
-                if (!response.ok) {
-                    throw new Error(`API call failed with status: ${response.status}`);
-                }
+            // Symptom Tabs
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const symptomContentEl = document.getElementById('symptom-content');
 
-                const result = await response.json();
-                
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    return result.candidates[0].content.parts[0].text;
-                } else {
-                    console.error("Unexpected API response structure:", result);
-                    if (result.promptFeedback && result.promptFeedback.blockReason) {
-                        throw new Error(`Request blocked: ${result.promptFeedback.blockReason}`);
-                    }
-                    throw new Error("AIから有効な応答がありませんでした。");
-                }
-            } finally {
-                // API呼び出し後に入力を再度有効化
-                chatInput.disabled = false;
-                document.querySelector('#chat-form button').disabled = false;
-                chatInput.focus();
+            function renderSymptomContent(tab) {
+                const data = symptomData[tab];
+                let html = `<div class="grid md:grid-cols-2 gap-6 p-4">`;
+                html += `<div><h4 class="font-bold text-lg mb-3 text-gray-700">本人の体験</h4><ul class="list-disc list-inside space-y-2 text-gray-600">${data.patient.map(s => `<li>${s}</li>`).join('')}</ul></div>`;
+                html += `<div><h4 class="font-bold text-lg mb-3 text-gray-700">周りから見たサイン</h4><ul class="list-disc list-inside space-y-2 text-gray-600">${data.observer.map(s => `<li>${s}</li>`).join('')}</ul></div>`;
+                html += `</div>`;
+                symptomContentEl.innerHTML = html;
             }
-        }
 
-        // ウィンドウ読み込み時にチャットを初期化
-        window.addEventListener('load', initializeChat);
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(b => b.classList.remove('active'));
+                    button.classList.add('active');
+                    renderSymptomContent(button.dataset.tab);
+                });
+            });
+            renderSymptomContent('manic');
+
+            // Communication Tips
+            const commTipsContainer = document.getElementById('comm-tips-container');
+            let commHtml = '';
+            for (const key in commTipsData) {
+                const data = commTipsData[key];
+                commHtml += `
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-bold text-lg mb-3 text-center text-gray-800">${data.title}</h4>
+                        <div class="mb-3">
+                            <h5 class="font-semibold text-green-700">適切な対応 👍</h5>
+                            <ul class="list-disc list-inside text-sm text-gray-600">${data.good.map(s => `<li>${s}</li>`).join('')}</ul>
+                        </div>
+                        <div>
+                            <h5 class="font-semibold text-red-700">避けるべき対応 👎</h5>
+                             <ul class="list-disc list-inside text-sm text-gray-600">${data.bad.map(s => `<li>${s}</li>`).join('')}</ul>
+                        </div>
+                    </div>
+                `;
+            }
+            commTipsContainer.innerHTML = commHtml;
+            
+            // Self-care Checklist
+            const checklistContainer = document.getElementById('selfcare-checklist');
+            checklistContainer.innerHTML = selfcareChecklistData.map(item => `
+                <div class="selfcare-item-wrapper">
+                    <label for="${item.id}" class="flex items-center p-3 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer border border-gray-50">
+                        <input type="checkbox" id="${item.id}" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <span class="ml-3 text-gray-700">${item.text}</span>
+                    </label>
+                    <p id="feedback-${item.id}" class="feedback-message text-gray-600 text-sm italic mt-1"></p>
+                </div>
+            `).join('');
+
+            // Add event listeners for checklist items
+            document.querySelectorAll('#selfcare-checklist input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', (event) => {
+                    const label = event.target.closest('label');
+                    const itemId = event.target.id;
+                    const feedbackElement = document.getElementById(`feedback-${itemId}`);
+                    const selectedItem = selfcareChecklistData.find(item => item.id === itemId);
+
+                    if (event.target.checked) {
+                        label.classList.add('checklist-item-checked');
+                        label.classList.remove('bg-gray-50', 'hover:bg-gray-100');
+                        if (selectedItem && selectedItem.feedback) {
+                            feedbackElement.textContent = selectedItem.feedback;
+                            feedbackElement.classList.add('active');
+                        }
+                    } else {
+                        label.classList.remove('checklist-item-checked');
+                        label.classList.add('bg-gray-50', 'hover:bg-gray-100');
+                        feedbackElement.classList.remove('active');
+                        feedbackElement.textContent = ''; // Clear feedback when unchecked
+                    }
+                });
+            });
+
+
+            // Resources Accordion
+            const accordionContainer = document.getElementById('resources-accordion');
+            accordionContainer.innerHTML = resourcesData.map((group, index) => `
+                <div class="bg-white rounded-lg shadow-sm">
+                    <button class="accordion-button w-full flex justify-between items-center text-left p-4 font-bold text-lg text-gray-800 hover:bg-gray-50">
+                        <span><span class="mr-3">${group.icon}</span>${group.category}</span>
+                        <span class="transform transition-transform duration-300">▼</span>
+                    </button>
+                    <div class="accordion-content">
+                        <div class="p-4 border-t border-gray-200">
+                            <ul class="space-y-3">
+                                ${group.items.map(item => `
+                                    <li class="text-gray-700">
+                                        <strong class="font-semibold">${item.name}</strong><br>
+                                        <p class="text-sm text-gray-600">${item.desc}</p>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.querySelectorAll('.accordion-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const content = button.nextElementSibling;
+                    const icon = button.querySelector('span:last-child');
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        document.querySelectorAll('.accordion-content').forEach(c => c.style.maxHeight = null);
+                        document.querySelectorAll('.accordion-button span:last-child').forEach(i => i.style.transform = 'rotate(0deg)');
+                        content.style.maxHeight = content.scrollHeight + "px";
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                });
+            });
+
+
+            // Charts.js
+            const moodWaveCtx = document.getElementById('moodWaveChart').getContext('2d');
+            new Chart(moodWaveCtx, {
+                type: 'line',
+                data: {
+                    labels: ['安定期', '軽躁状態へ', '躁状態', '下降期', 'うつ状態', '回復期', '安定期'],
+                    datasets: [{
+                        label: '気分の波',
+                        data: [0, 1.5, 3, 1, -2, -0.5, 0],
+                        fill: false,
+                        borderColor: '#8AB4A0',
+                        backgroundColor: '#8AB4A0',
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointHoverRadius: 8,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const labels = ['安定した状態', '気分が高揚し始める', '活動的だが、トラブルも', '気分の落ち込み', '無気力でつらい時期', '少しずつ元気に', '安定した状態'];
+                                    return labels[context.dataIndex];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: { display: true, text: '気分の高揚度' },
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    if(value > 0) return '高揚';
+                                    if(value < 0) return '落ち込み';
+                                    return '安定';
+                                }
+                            }
+                        },
+                        x: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            const supporterBurdensCtx = document.getElementById('supporterBurdensChart').getContext('2d');
+            new Chart(supporterBurdensCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['孤独感', '無力感', '不安', '罪悪感', '疲労'],
+                    datasets: [{
+                        label: '支援者の負担',
+                        data: [25, 20, 25, 15, 15],
+                        backgroundColor: ['#A8D8EA', '#AA96DA', '#FCBAD3', '#FFFFD2', '#D3A993'],
+                        borderColor: '#FDFBF8',
+                        borderWidth: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: { size: 12 }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: '支援者が抱えやすい感情',
+                            font: { size: 14 }
+                        }
+                    }
+                }
+            });
+
+            // Gemini API Integration - Symptom Q&A
+            const askSymptomQuestionBtn = document.getElementById('askSymptomQuestionBtn');
+            const symptomQuestionInput = document.getElementById('symptomQuestionInput');
+            const symptomAnswerArea = document.getElementById('symptomAnswerArea');
+            const symptomAnswerText = document.getElementById('symptomAnswerText');
+            const symptomLoadingIndicator = document.getElementById('symptomLoadingIndicator');
+
+            askSymptomQuestionBtn.addEventListener('click', async () => {
+                const prompt = symptomQuestionInput.value.trim();
+                if (!prompt) {
+                    symptomAnswerText.textContent = "質問を入力してください。";
+                    return;
+                }
+
+                symptomAnswerText.textContent = '';
+                symptomAnswerText.classList.add('hidden'); // Hide text to show spinner
+                symptomLoadingIndicator.classList.remove('hidden');
+                symptomAnswerArea.classList.add('flex', 'justify-center', 'items-center');
+
+                try {
+                    let chatHistory = [];
+                    chatHistory.push({ role: "user", parts: [{ text: `双極性障害の症状や行動について、以下の質問に簡潔に答えてください。専門的な内容は避け、支援者が理解しやすい言葉でお願いします。\n質問: ${prompt}` }] });
+                    const payload = { contents: chatHistory };
+                    const apiKey = "";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        symptomAnswerText.textContent = text;
+                    } else {
+                        symptomAnswerText.textContent = "回答を生成できませんでした。もう一度お試しください。";
+                    }
+                } catch (error) {
+                    console.error('Error fetching symptom answer:', error);
+                    symptomAnswerText.textContent = "エラーが発生しました。インターネット接続を確認し、もう一度お試しください。";
+                } finally {
+                    symptomLoadingIndicator.classList.add('hidden');
+                    symptomAnswerText.classList.remove('hidden'); // Show text again
+                    symptomAnswerArea.classList.remove('flex', 'justify-center', 'items-center');
+                }
+            });
+
+            // Gemini API Integration - Emotional Support Message Generator
+            const generateSupportMessageBtn = document.getElementById('generateSupportMessageBtn');
+            const emotionalSupportInput = document.getElementById('emotionalSupportInput');
+            const supportMessageArea = document.getElementById('supportMessageArea');
+            const supportMessageText = document.getElementById('supportMessageText');
+            const supportMessageLoadingIndicator = document.getElementById('supportMessageLoadingIndicator');
+
+            generateSupportMessageBtn.addEventListener('click', async () => {
+                const feelings = emotionalSupportInput.value.trim();
+                if (!feelings) {
+                    supportMessageText.textContent = "今の気持ちを入力してください。";
+                    return;
+                }
+
+                supportMessageText.textContent = '';
+                supportMessageText.classList.add('hidden'); // Hide text to show spinner
+                supportMessageLoadingIndicator.classList.remove('hidden');
+                supportMessageArea.classList.add('flex', 'justify-center', 'items-center');
+
+                try {
+                    let chatHistory = [];
+                    chatHistory.push({ role: "user", parts: [{ text: `双極性障害のパートナーを支える人が、以下のような気持ちを抱えています。その気持ちに寄り添い、優しく、そして励ますようなメッセージ（200字以内）を生成してください。励ましの言葉だけでなく、相手の感情を肯定する内容を強く含めてください。\n気持ち: ${feelings}` }] });
+                    const payload = { contents: chatHistory };
+                    const apiKey = "";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        supportMessageText.textContent = text;
+                    } else {
+                        supportMessageText.textContent = "メッセージを生成できませんでした。もう一度お試しください。";
+                    }
+                } catch (error) {
+                    console.error('Error generating support message:', error);
+                    supportMessageText.textContent = "エラーが発生しました。インターネット接続を確認し、もう一度お試しください。";
+                } finally {
+                    supportMessageLoadingIndicator.classList.add('hidden');
+                    supportMessageText.classList.remove('hidden'); // Show text again
+                    supportMessageArea.classList.remove('flex', 'justify-center', 'items-center');
+                }
+            });
+        });
     </script>
 </body>
 </html>
